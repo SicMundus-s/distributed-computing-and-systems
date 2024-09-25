@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-rabbitmq-history-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5435
+      targetPort: 5432
+  selector:
+    app: postgres-rabbitmq-history
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-rabbitmq-history-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-rabbitmq-history
+  template:
+    metadata:
+      labels:
+        app: postgres-rabbitmq-history
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "rabbitmq_history_data"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-rabbitmq-history-storage
+      volumes:
+        - name: postgres-rabbitmq-history-storage
+          persistentVolumeClaim:
+            claimName: postgres-rabbitmq-history-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-rabbitmq-history-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5672
+      targetPort: 5672
+  selector:
+    app: rabbitmq
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: management
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: "guest"
+            - name: RABBITMQ_DEFAULT_PASS
+              value: "guest"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-microservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq-microservice
+  template:
+    metadata:
+      labels:
+        app: rabbitmq-microservice
+    spec:
+      containers:
+        - name: rabbitmq-microservice
+          image: ravenhub/rabbitmq-server:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres-rabbitmq-history-service:5435/rabbitmq_history_data"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "postgres"
+            - name: SPRING_RABBITMQ_HOST
+              value: "rabbitmq-service"
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: "guest"
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: "guest"

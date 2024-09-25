@@ -1,0 +1,8 @@
+rootProject.name = 'distributed-computing-and-systems-SicMundus-s'
+
+includeBuild 'core'
+includeBuild 'eureka-server'
+includeBuild 'gateway'
+includeBuild 'security'
+includeBuild 'simple-english-data'
+includeBuild 'rabbitmq'

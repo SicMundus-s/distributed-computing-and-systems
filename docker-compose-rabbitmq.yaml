@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  postgres:
+    container_name: rabbitmq_history
+    image: postgres:16
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rabbitmq_history_data
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  rabbitmq:
+    container_name: rabbitmq_server
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"  # AMQP port
+      - "15672:15672" # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq

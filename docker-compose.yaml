@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  postgres_english_data:
+    container_name: learningEnglish_data_db
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: learningEnglish_data

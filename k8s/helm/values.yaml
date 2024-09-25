@@ -1,0 +1,12 @@
+architecture: replication
+postgresql:
+  username: postgres
+  password: postgres
+  replPassword: replpostgres
+  database: learningEnglish_data
+  replicaCount: 2
+persistence:
+  size: 1Gi
+service:
+  type: ClusterIP
+  port: 5432
